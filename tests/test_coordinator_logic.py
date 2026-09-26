@@ -92,6 +92,28 @@ def combine_bike_data_logic(profile_data: Dict[str, Any], soc_data: Optional[Dic
     return combined
 
 
+def parse_location_logic(location: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Test version of parse_location function logic.
+
+    This replicates the logic from coordinator.py to test it independently.
+    """
+    if not location:
+        return None
+
+    latitude = location.get("latitude")
+    longitude = location.get("longitude")
+    if latitude is None or longitude is None:
+        return None
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "altitude_m": location.get("altitude"),
+        "accuracy_m": location.get("horizontalAccuracy"),
+        "detected_at": location.get("detectedAt"),
+    }
+
+
 def test_combine_bike_data_with_none_connected_module():
     """Test that coordinator handles None connectedModule gracefully.
 
@@ -235,3 +257,42 @@ def test_combine_bike_data_with_none_number_of_charge_cycles():
 
     assert result is not None
     assert result["battery"]["charge_cycles_total"] is None
+
+
+def test_parse_location():
+    """Test parsing a theft-detection latest-locations entry."""
+    location = {
+        "bikeId": "f1468c3a-b14a-413a-b2d0-a3ae9e978905",
+        "detectedAt": "2026-09-20T04:55:46Z",
+        "latitude": 60.1699,
+        "longitude": 24.9384,
+        "altitude": 29.6,
+        "horizontalAccuracy": 54.91,
+        "createdAt": "2026-09-20T04:56:19.248486Z",
+    }
+
+    result = parse_location_logic(location)
+
+    assert result == {
+        "latitude": 60.1699,
+        "longitude": 24.9384,
+        "altitude_m": 29.6,
+        "accuracy_m": 54.91,
+        "detected_at": "2026-09-20T04:55:46Z",
+    }
+
+
+def test_parse_location_without_altitude():
+    """Test that optional fields may be missing."""
+    result = parse_location_logic({"latitude": 60.1, "longitude": 24.9})
+
+    assert result["latitude"] == 60.1
+    assert result["altitude_m"] is None
+    assert result["accuracy_m"] is None
+
+
+def test_parse_location_missing():
+    """Test that missing or incomplete locations yield None."""
+    assert parse_location_logic(None) is None
+    assert parse_location_logic({}) is None
+    assert parse_location_logic({"latitude": 60.1, "longitude": None}) is None
