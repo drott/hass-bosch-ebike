@@ -16,6 +16,7 @@ def combine_bike_data_logic(profile_data: Dict[str, Any], soc_data: Optional[Dic
     drive_unit = bike_attrs.get("driveUnit") or {}
     connected_module = bike_attrs.get("connectedModule") or {}
     remote_control = bike_attrs.get("remoteControl") or {}
+    media_assets = bike_attrs.get("mediaAssets") or {}
 
     # Start with profile data
     combined = {
@@ -35,6 +36,7 @@ def combine_bike_data_logic(profile_data: Dict[str, Any], soc_data: Optional[Dic
             "is_locked": (drive_unit.get("lock") or {}).get("isLocked"),
             "lock_enabled": (drive_unit.get("lock") or {}).get("isEnabled"),
             "alarm_enabled": connected_module.get("isAlarmFeatureEnabled"),
+            "picture_url": media_assets.get("bike_picture_url"),
         },
         "components": {
             "drive_unit": {
@@ -257,6 +259,29 @@ def test_combine_bike_data_with_none_number_of_charge_cycles():
 
     assert result is not None
     assert result["battery"]["charge_cycles_total"] is None
+
+
+def test_combine_bike_data_with_picture_url():
+    """Test that the bike picture URL is taken from mediaAssets."""
+    picture_url = "https://cdn.interface-obc-s3.prod.connected-biking.cloud/CAN-CAN-CANYON/bike.png"
+    profile_data = {
+        "data": {
+            "attributes": {
+                "mediaAssets": {"bike_picture_url": picture_url},
+            }
+        }
+    }
+
+    result = combine_bike_data_logic(profile_data, None)
+
+    assert result["bike"]["picture_url"] == picture_url
+
+
+def test_combine_bike_data_with_none_media_assets():
+    """Test that missing or null mediaAssets yields no picture URL."""
+    for attributes in ({}, {"mediaAssets": None}):
+        result = combine_bike_data_logic({"data": {"attributes": attributes}}, None)
+        assert result["bike"]["picture_url"] is None
 
 
 def test_parse_location():

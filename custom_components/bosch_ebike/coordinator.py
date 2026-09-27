@@ -119,6 +119,7 @@ class BoschEBikeDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             drive_unit = bike_attrs.get("driveUnit") or {}
             connected_module = bike_attrs.get("connectedModule") or {}
             remote_control = bike_attrs.get("remoteControl") or {}
+            media_assets = bike_attrs.get("mediaAssets") or {}
 
             # Start with profile data
             combined = {
@@ -138,6 +139,7 @@ class BoschEBikeDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "is_locked": (drive_unit.get("lock") or {}).get("isLocked"),
                     "lock_enabled": (drive_unit.get("lock") or {}).get("isEnabled"),
                     "alarm_enabled": connected_module.get("isAlarmFeatureEnabled"),
+                    "picture_url": media_assets.get("bike_picture_url"),
                 },
                 "components": {
                     "drive_unit": {

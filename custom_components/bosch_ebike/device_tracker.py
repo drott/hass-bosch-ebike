@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import BoschEBikeDataUpdateCoordinator
+from .picture import picture_path
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -102,6 +103,16 @@ class BoschEBikeDeviceTracker(CoordinatorEntity[BoschEBikeDataUpdateCoordinator]
         if not location or location.get("accuracy_m") is None:
             return 0
         return round(location["accuracy_m"])
+
+    @property
+    def entity_picture(self) -> str | None:
+        """Return the bike picture from the Bosch bike profile."""
+        if self.coordinator.data is None:
+            return None
+        source_url = self.coordinator.data.get("bike", {}).get("picture_url")
+        if not source_url:
+            return None
+        return picture_path(self.coordinator.bike_id, source_url)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
